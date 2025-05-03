@@ -7,7 +7,7 @@ part 'todo.freezed.dart';
 const _uuid = Uuid();
 
 @freezed
-class Todo with _$Todo {
+abstract class Todo with _$Todo {
   const factory Todo({
     required String id,
     required String title,
