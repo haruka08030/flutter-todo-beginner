@@ -11,6 +11,7 @@ abstract class Todo with _$Todo {
   const factory Todo({
     required String id,
     required String title,
+    required DateTime createdAt,
     @Default(false) bool completed,
   }) = _Todo;
 
@@ -18,16 +19,14 @@ abstract class Todo with _$Todo {
 
   @override
   String toString() {
-    return 'Todo(title: $title, completed: $completed)';
+    return 'Todo(title: $title, completed: $completed, createdAt: $createdAt)';
   }
 }
 
 class TodoList extends Notifier<List<Todo>> {
   @override
   List<Todo> build() => [
-        const Todo(id: 'todo-0', title: 'Buy cookies'),
-        const Todo(id: 'todo-1', title: 'Star Riverpod'),
-        const Todo(id: 'todo-2', title: 'Have a walk'),
+        Todo(id: 'todo-0', title: 'Buy cookies', createdAt: DateTime.now()),
       ];
 
   void add(String title) {
@@ -36,6 +35,7 @@ class TodoList extends Notifier<List<Todo>> {
       Todo(
         id: _uuid.v4(),
         title: title,
+        createdAt: DateTime.now(),
       ),
     ];
   }
@@ -48,6 +48,7 @@ class TodoList extends Notifier<List<Todo>> {
             id: todo.id,
             completed: !todo.completed,
             title: todo.title,
+            createdAt: todo.createdAt,
           )
         else
           todo,
@@ -60,6 +61,7 @@ class TodoList extends Notifier<List<Todo>> {
         if (todo.id == id)
           todo.copyWith(
             title: title,
+            createdAt: DateTime.now(),
           )
         else
           todo,
