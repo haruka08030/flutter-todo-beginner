@@ -58,9 +58,7 @@ class TodoList extends Notifier<List<Todo>> {
     state = [
       for (final todo in state)
         if (todo.id == id)
-          Todo(
-            id: todo.id,
-            completed: todo.completed,
+          todo.copyWith(
             title: title,
           )
         else
