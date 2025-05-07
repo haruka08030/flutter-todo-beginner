@@ -17,6 +17,7 @@ T _$identity<T>(T value) => value;
 mixin _$Todo {
   String get id;
   String get title;
+  DateTime get createdAt;
   bool get completed;
 
   /// Create a copy of Todo
@@ -33,12 +34,14 @@ mixin _$Todo {
             other is Todo &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.title, title) || other.title == title) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
             (identical(other.completed, completed) ||
                 other.completed == completed));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, id, title, completed);
+  int get hashCode => Object.hash(runtimeType, id, title, createdAt, completed);
 }
 
 /// @nodoc
@@ -46,7 +49,7 @@ abstract mixin class $TodoCopyWith<$Res> {
   factory $TodoCopyWith(Todo value, $Res Function(Todo) _then) =
       _$TodoCopyWithImpl;
   @useResult
-  $Res call({String id, String title, bool completed});
+  $Res call({String id, String title, DateTime createdAt, bool completed});
 }
 
 /// @nodoc
@@ -63,6 +66,7 @@ class _$TodoCopyWithImpl<$Res> implements $TodoCopyWith<$Res> {
   $Res call({
     Object? id = null,
     Object? title = null,
+    Object? createdAt = null,
     Object? completed = null,
   }) {
     return _then(_self.copyWith(
@@ -74,6 +78,10 @@ class _$TodoCopyWithImpl<$Res> implements $TodoCopyWith<$Res> {
           ? _self.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
+      createdAt: null == createdAt
+          ? _self.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
       completed: null == completed
           ? _self.completed
           : completed // ignore: cast_nullable_to_non_nullable
@@ -85,13 +93,19 @@ class _$TodoCopyWithImpl<$Res> implements $TodoCopyWith<$Res> {
 /// @nodoc
 
 class _Todo extends Todo {
-  const _Todo({required this.id, required this.title, this.completed = false})
+  const _Todo(
+      {required this.id,
+      required this.title,
+      required this.createdAt,
+      this.completed = false})
       : super._();
 
   @override
   final String id;
   @override
   final String title;
+  @override
+  final DateTime createdAt;
   @override
   @JsonKey()
   final bool completed;
@@ -111,12 +125,14 @@ class _Todo extends Todo {
             other is _Todo &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.title, title) || other.title == title) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
             (identical(other.completed, completed) ||
                 other.completed == completed));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, id, title, completed);
+  int get hashCode => Object.hash(runtimeType, id, title, createdAt, completed);
 }
 
 /// @nodoc
@@ -125,7 +141,7 @@ abstract mixin class _$TodoCopyWith<$Res> implements $TodoCopyWith<$Res> {
       __$TodoCopyWithImpl;
   @override
   @useResult
-  $Res call({String id, String title, bool completed});
+  $Res call({String id, String title, DateTime createdAt, bool completed});
 }
 
 /// @nodoc
@@ -142,6 +158,7 @@ class __$TodoCopyWithImpl<$Res> implements _$TodoCopyWith<$Res> {
   $Res call({
     Object? id = null,
     Object? title = null,
+    Object? createdAt = null,
     Object? completed = null,
   }) {
     return _then(_Todo(
@@ -153,6 +170,10 @@ class __$TodoCopyWithImpl<$Res> implements _$TodoCopyWith<$Res> {
           ? _self.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
+      createdAt: null == createdAt
+          ? _self.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
       completed: null == completed
           ? _self.completed
           : completed // ignore: cast_nullable_to_non_nullable

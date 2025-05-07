@@ -156,7 +156,6 @@ class TodoItem extends HookConsumerWidget {
           if (focused) {
             textEditingController.text = todo.title;
           } else {
-            // Commit changes only when the textfield is unfocused, for performance
             ref
                 .read(todoListProvider.notifier)
                 .edit(id: todo.id, title: textEditingController.text);
@@ -178,18 +177,36 @@ class TodoItem extends HookConsumerWidget {
                   focusNode: textFieldFocusNode,
                   controller: textEditingController,
                 )
-              : Text(
-                  todo.title,
-                  style: TextStyle(
-                    decoration: todo.completed
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none,
-                    color: todo.completed ? Colors.grey : Colors.black,
-                  ),
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      todo.title,
+                      style: TextStyle(
+                        decoration: todo.completed
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                        color: todo.completed ? Colors.grey : Colors.black,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatDate(todo.createdAt),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
         ),
       ),
     );
+  }
+
+  String _formatDate(DateTime dt) {
+    return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
   }
 }
 
