@@ -1,8 +1,10 @@
 import 'package:riverpod/riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'date_time_timestamp_converter.dart';
 
 part 'todo.freezed.dart';
+part 'todo.g.dart';
 
 const _uuid = Uuid();
 
@@ -11,16 +13,11 @@ abstract class Todo with _$Todo {
   const factory Todo({
     required String id,
     required String title,
-    required DateTime createdAt,
     @Default(false) bool completed,
+    @DateTimeTimestampConverter() required DateTime createdAt,
   }) = _Todo;
 
-  const Todo._();
-
-  @override
-  String toString() {
-    return 'Todo(title: $title, completed: $completed, createdAt: $createdAt)';
-  }
+  factory Todo.fromJson(Map<String, dynamic> json) => _$TodoFromJson(json);
 }
 
 class TodoList extends Notifier<List<Todo>> {

@@ -1,43 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
 import 'todo.dart';
+import 'todo_firestore.dart';
+import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 final addTodoKey = UniqueKey();
 final activeFilterKey = UniqueKey();
 final completedFilterKey = UniqueKey();
 final allFilterKey = UniqueKey();
 
-final todoListProvider = NotifierProvider<TodoList, List<Todo>>(TodoList.new);
-
-enum TodoListFilter {
-  all,
-  active,
-  completed,
-}
-
-final todoListFilter = StateProvider((_) => TodoListFilter.all);
-
-final uncompletedTodosCount = Provider<int>((ref) {
-  return ref.watch(todoListProvider).where((todo) => !todo.completed).length;
-});
-
-final filteredTodos = Provider<List<Todo>>((ref) {
-  final filter = ref.watch(todoListFilter);
-  final todos = ref.watch(todoListProvider);
-
-  switch (filter) {
-    case TodoListFilter.completed:
-      return todos.where((todo) => todo.completed).toList();
-    case TodoListFilter.active:
-      return todos.where((todo) => !todo.completed).toList();
-    case TodoListFilter.all:
-      return todos;
-  }
-});
-
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -57,54 +35,54 @@ class Home extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final todos = ref.watch(filteredTodos);
+    final todosAsync = ref.watch(todosStreamProvider);
     final newTodoController = useTextEditingController();
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        body: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 100),
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    key: addTodoKey,
-                    controller: newTodoController,
+        body: todosAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Error: $e')),
+          data: (todos) => ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 100),
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: addTodoKey,
+                      controller: newTodoController,
+                    ),
+                  ),
+                  IconButton.outlined(
+                    icon: const Icon(Icons.add_outlined),
+                    onPressed: () async {
+                      if (newTodoController.text.isNotEmpty) {
+                        await addTodo(newTodoController.text);
+                        newTodoController.clear();
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 42),
+              if (todos.isNotEmpty) const Divider(height: 0),
+              for (var i = 0; i < todos.length; i++) ...[
+                if (i > 0) const Divider(height: 0),
+                Dismissible(
+                  key: ValueKey(todos[i].id),
+                  onDismissed: (_) => deleteTodo(todos[i].id),
+                  child: ProviderScope(
+                    overrides: [
+                      _currentTodo.overrideWithValue(todos[i]),
+                    ],
+                    child: const TodoItem(),
                   ),
                 ),
-                IconButton.outlined(
-                  icon: const Icon(Icons.add_outlined),
-                  onPressed: () {
-                    if (newTodoController.text.isNotEmpty) {
-                      ref
-                          .read(todoListProvider.notifier)
-                          .add(newTodoController.text);
-                      newTodoController.clear();
-                    }
-                  },
-                ),
               ],
-            ),
-            const SizedBox(height: 42),
-            if (todos.isNotEmpty) const Divider(height: 0),
-            for (var i = 0; i < todos.length; i++) ...[
-              if (i > 0) const Divider(height: 0),
-              Dismissible(
-                key: ValueKey(todos[i].id),
-                onDismissed: (_) {
-                  ref.read(todoListProvider.notifier).remove(todos[i]);
-                },
-                child: ProviderScope(
-                  overrides: [
-                    _currentTodo.overrideWithValue(todos[i]),
-                  ],
-                  child: const TodoItem(),
-                ),
-              ),
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -156,9 +134,7 @@ class TodoItem extends HookConsumerWidget {
           if (focused) {
             textEditingController.text = todo.title;
           } else {
-            ref
-                .read(todoListProvider.notifier)
-                .edit(id: todo.id, title: textEditingController.text);
+            updateTodo(todo.copyWith(title: textEditingController.text));
           }
         },
         child: ListTile(
@@ -167,10 +143,10 @@ class TodoItem extends HookConsumerWidget {
             textFieldFocusNode.requestFocus();
           },
           leading: Checkbox(
-            value: todo.completed,
-            onChanged: (value) =>
-                ref.read(todoListProvider.notifier).toggle(todo.id),
-          ),
+              value: todo.completed,
+              onChanged: (value) {
+                updateTodo(todo.copyWith(completed: value ?? false));
+              }),
           title: itemIsFocused
               ? TextField(
                   autofocus: true,
