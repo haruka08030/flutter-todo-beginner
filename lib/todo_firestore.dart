@@ -12,16 +12,22 @@ final todosStreamProvider = StreamProvider.autoDispose<List<Todo>>((ref) {
   return todosRef
       .orderBy('createdAt', descending: true)
       .snapshots()
-      .map((snap) => snap.docs.map((doc) => doc.data()).toList());
+      .map((snap) {
+    return snap.docs.map((doc) => doc.data()).toList();
+  });
 });
 
 Future<void> addTodo(String title) async {
+  final documentReference =
+      FirebaseFirestore.instance.collection('todos').doc();
+
   final newTodo = Todo(
-    id: FirebaseFirestore.instance.collection('todos').doc().id,
+    id: documentReference.id,
     title: title,
     completed: false,
     createdAt: DateTime.now(),
   );
+
   await todosRef.doc(newTodo.id).set(newTodo);
 }
 

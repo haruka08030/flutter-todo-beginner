@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'todo.dart';
 import 'todo_firestore.dart';
 import 'firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 final addTodoKey = UniqueKey();
 final activeFilterKey = UniqueKey();
@@ -15,13 +15,24 @@ final allFilterKey = UniqueKey();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: ".env");
+    print("Loaded .env file successfully");
+  } catch (e) {
+    print("Error loading .env file: $e");
+  }
 
-  final isInitialized = Firebase.apps.any((app) => app.name == '[DEFAULT]');
-  if (!isInitialized) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      print("Firebase initialized successfully");
+    } else {
+      print("Firebase already initialized");
+    }
+  } catch (e) {
+    print("Error initializing Firebase: $e");
   }
 
   runApp(const ProviderScope(child: MyApp()));
@@ -70,10 +81,9 @@ class Home extends HookConsumerWidget {
                   const SizedBox(height: 16),
                   Text('Error: $e', textAlign: TextAlign.center),
                   const SizedBox(height: 8),
-                  Text(
-                    '$stack',
-                    style: const TextStyle(fontSize: 12),
-                    textAlign: TextAlign.center,
+                  ElevatedButton(
+                    onPressed: () => ref.refresh(todosStreamProvider),
+                    child: const Text('再読み込み'),
                   ),
                 ],
               ),
@@ -97,14 +107,13 @@ class Home extends HookConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     IconButton.filled(
-                      icon: const Icon(Icons.add),
-                      onPressed: () async {
-                        if (newTodoController.text.isNotEmpty) {
-                          await addTodo(newTodoController.text);
-                          newTodoController.clear();
-                        }
-                      },
-                    ),
+                        icon: const Icon(Icons.add),
+                        onPressed: () async {
+                          if (newTodoController.text.isNotEmpty) {
+                            await addTodo(newTodoController.text);
+                            newTodoController.clear();
+                          }
+                        }),
                   ],
                 ),
               ),
@@ -164,7 +173,7 @@ class TodoItem extends HookConsumerWidget {
     final textFieldFocusNode = useFocusNode();
 
     return Material(
-      color: Colors.white, // Changed from dark red to white
+      color: Colors.white,
       elevation: 2,
       borderRadius: BorderRadius.circular(8),
       child: Focus(
